@@ -31,6 +31,7 @@
 5. If the new model DOESN'T have better metrics: do nothing
 
 ### Tips 
+* make sure to create `metric_logs` folder to store metric logs and avoid error.
 * Make sure to run the webhook server in the background. 
 * Using ngrok is an option.
 
