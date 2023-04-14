@@ -14,6 +14,9 @@
 
 ## Instructions
 
+### Requirements
+* Git, Git LFS
+* Python packages (to add)
 ### Setup
 1. Clone the model and dataset repo and set up the git credential.
 2. Make sure that the working directory, file names are set correctly.
@@ -37,4 +40,5 @@
 
 ## TODOs
 - [ ] Replace flask server with Jenkins
+- [ ] Add `requirements.txt` for python pakages
 
