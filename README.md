@@ -16,7 +16,7 @@
 
 ### Requirements
 * Git, Git LFS
-* Python packages (to add)
+* To install Python packages with pip: `$ pip install -r requirements.txt`
 ### Setup
 1. Clone the model and dataset repo and set up the git credential.
 2. Make sure that the working directory, file names are set correctly.
@@ -38,6 +38,6 @@
 * Using ngrok is an option for testing.
 
 ## TODOs
-- [ ] Add `requirements.txt` for python pakages
+- [x] Add `requirements.txt` for python pakages
 - [ ] Replace flask server with Jenkins
 
