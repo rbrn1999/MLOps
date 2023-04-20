@@ -1,14 +1,20 @@
 import logging
+from datetime import datetime
+import subprocess
+import pandas as pd
+import json
+import shutil
+from transformers import BertTokenizerFast, BertForSequenceClassification, Trainer, TrainingArguments
+from datasets import Dataset, DatasetDict
+from sklearn.metrics import accuracy_score, f1_score
+
 logging.basicConfig(filename="log.txt", level=logging.DEBUG,
                     format="%(asctime)s %(message)s", filemode="a")
 
-import subprocess
 # subprocess.run(["git", "clone", "https://huggingface.co/owen198/esgBERT_CICD"]) # first time
 subprocess.run(["git", "pull"], cwd="/workspace/Step3/esgBERT_dataset")
-
 subprocess.run(["git", "pull"], cwd="/workspace/Step3/esgBERT_CICD")
 
-import pandas as pd
 train_df = pd.read_csv('esgBERT_dataset/train.csv')
 used_set = set(pd.read_csv('train_used.csv').text)
 
@@ -25,6 +31,11 @@ dev_df = pd.read_csv('esgBERT_dataset/dev.csv')
 dev_labels = dev_df['label'].tolist()
 dev_texts = dev_df['text'].tolist()
 
+timestamp = datetime.fromtimestamp(datetime.timestamp(datetime.now())).strftime("%Y/%m/%d, %H:%M:%S")
+if new_data_length == 0:
+    logging_df = pd.DataFrame([[timestamp, False, False, new_data_length, train_length, None, None, None]],columns=['Timestamp', 'Did Train', 'Model Update', 'Unseen Data', 'All Data', 'Accuracy', 'F1 Weighted', 'Loss'])
+    logging_df.to_csv('metric_logs/logs.csv', mode='a', header=False, index=False)
+
 logging.info("New Training")
 logging.info(f"trained data count: {len(used_set)}")
 logging.info(f"new data count(not_used/total): {new_data_length} / {train_length}")
@@ -35,8 +46,6 @@ int2Label = {i: labels[i] for i in range(len(labels))}
 train_labels = [label2Int[label] for label in train_labels]
 dev_labels = [label2Int[label] for label in dev_labels]
 
-from transformers import BertTokenizerFast
-
 tokenizer = BertTokenizerFast.from_pretrained("bert-base-uncased")
 train_data = tokenizer(train_texts, padding=True, truncation=True, return_tensors="pt")
 dev_data = tokenizer(dev_texts, padding=True, truncation=True, return_tensors="pt")
@@ -44,24 +53,20 @@ dev_data = tokenizer(dev_texts, padding=True, truncation=True, return_tensors="p
 train_data['labels'] = train_labels
 dev_data['labels'] = dev_labels
 
-import datasets
-from datasets import Dataset
 
 training_dataset = Dataset.from_dict(train_data)
 dev_dataset = Dataset.from_dict(dev_data)
 
-tokenized_datasets = datasets.DatasetDict(
+tokenized_datasets = DatasetDict(
     {
         "train": training_dataset,
         "validation": dev_dataset
     }
 )
 
-from transformers import BertForSequenceClassification
 checkpoint = "esgBERT_CICD/esgBERT"
 model = BertForSequenceClassification.from_pretrained(checkpoint, num_labels=35, id2label=int2Label, label2id=label2Int)
 
-from transformers import TrainingArguments
 
 training_args = TrainingArguments(
     "./checkpoints",
@@ -77,7 +82,6 @@ training_args = TrainingArguments(
     weight_decay=0.01,
 )
 
-from sklearn.metrics import accuracy_score, f1_score
 
 def compute_metrics(pred):
     labels = pred.label_ids
@@ -87,7 +91,6 @@ def compute_metrics(pred):
         metrics[f'f1_{average}'] = f1_score(labels, preds, average=average)
     return metrics
 
-from transformers import Trainer
 
 trainer = Trainer(
     model,
@@ -97,23 +100,19 @@ trainer = Trainer(
     compute_metrics=compute_metrics,
 )
 print(trainer.train())
-
 print(trainer.evaluate())
 
-import json
-import shutil
-from datetime import datetime
+shutil.copytree("checkpoints/runs", "esgBERT_CICD/logs", dirs_exist_ok=True)
+
 
 prev_metrics = {}
 with open("esgBERT_CICD/metrics.json", "r") as file:
     prev_metrics = json.load(file)
-    
-    
+
 metrics = trainer.evaluate()
-with open(f"metric_logs/metric_{datetime.now().timestamp()}.json", "w+") as file: 
-    json.dump(metrics, file)
 logging.info(f"new model metrics: {metrics}")
-    
+
+logging_df = pd.DataFrame([[timestamp, True, True, new_data_length, train_length, metrics['eval_accuracy'], metrics['eval_f1_weighted'], metrics['eval_loss']]],columns=['Timestamp', 'Did Train', 'Model Update', 'Unseen Data', 'All Data', 'Accuracy', 'F1 Weighted', 'Loss'])
     
 try:
     if metrics['eval_loss'] <= prev_metrics['eval_loss'] and metrics['eval_f1_weighted'] >= prev_metrics['eval_f1_weighted']:
@@ -132,10 +131,14 @@ try:
         print("'train_used.csv' is updated")
         logging.info("'train_used.csv' is updated")
     else:
+        logging_df.loc[0, ['Is Better']] = [False]
         print("model is not better after training, model won't be saved.")
         logging.info(f"metrics is not better, won't update model.")
 except KeyError:
     print("metrics.json caused KeyError.")
+finally:
+    timestamp = datetime.fromtimestamp(datetime.timestamp(datetime.now())).strftime("%Y/%m/%d, %H:%M:%S")
+    logging_df.to_csv('metric_logs/logs.csv', mode='a', header=False, index=False)
 
 """## run model
 from transformers import BertForSequenceClassification, pipeline

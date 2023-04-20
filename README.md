@@ -9,7 +9,7 @@
 `esgBERTv4.py`: training script \
 `train_used.csv`: all used training data \
 `webhook.py`: flask server to receive webhook trigger \
-`metric_logs`: metrics log of each updated model \
+`metric_logs`: directory to store each run's metrics \
 `log.txt`: log of the training process
 
 ## Instructions
@@ -36,9 +36,9 @@
 ### Tips 
 * make sure to create `metric_logs` folder to store metric logs and avoid error.
 * Make sure to run the webhook server in the background. 
-* Using ngrok is an option.
+* Using ngrok is an option for testing.
 
 ## TODOs
-- [ ] Replace flask server with Jenkins
 - [ ] Add `requirements.txt` for python pakages
+- [ ] Replace flask server with Jenkins
 
