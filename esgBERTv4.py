@@ -35,6 +35,7 @@ timestamp = datetime.fromtimestamp(datetime.timestamp(datetime.now())).strftime(
 if new_data_length == 0:
     logging_df = pd.DataFrame([[timestamp, False, False, new_data_length, train_length, None, None, None]],columns=['Timestamp', 'Did Train', 'Model Update', 'Unseen Data', 'All Data', 'Accuracy', 'F1 Weighted', 'Loss'])
     logging_df.to_csv('metric_logs/logs.csv', mode='a', header=False, index=False)
+    exit()
 
 logging.info("New Training")
 logging.info(f"trained data count: {len(used_set)}")
