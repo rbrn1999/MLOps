@@ -12,8 +12,10 @@ logging.basicConfig(filename="log.txt", level=logging.DEBUG,
                     format="%(asctime)s %(message)s", filemode="a")
 
 # subprocess.run(["git", "clone", "https://huggingface.co/owen198/esgBERT_CICD"]) # first time
-subprocess.run(["git", "pull"], cwd="/workspace/Step3/esgBERT_dataset")
-subprocess.run(["git", "pull"], cwd="/workspace/Step3/esgBERT_CICD")
+subprocess.run(["git", "fetch", "origin", "main"], cwd="/workspace/Step3/esgBERT_dataset")
+subprocess.run(["git", "reset", "--hard", "FETCH_HEAD"], cwd="/workspace/Step3/esgBERT_dataset")
+subprocess.run(["git", "fetch", "origin", "main"], cwd="/workspace/Step3/esgBERT_CICD")
+subprocess.run(["git", "reset", "--hard", "FETCH_HEAD"], cwd="/workspace/Step3/esgBERT_CICD")
 
 train_df = pd.read_csv('esgBERT_dataset/train.csv')
 used_set = set(pd.read_csv('train_used.csv').text)
@@ -140,6 +142,7 @@ except KeyError:
 finally:
     timestamp = datetime.fromtimestamp(datetime.timestamp(datetime.now())).strftime("%Y/%m/%d, %H:%M:%S")
     logging_df.to_csv('metric_logs/logs.csv', mode='a', header=False, index=False)
+    print("logs.csv updated")
 
 """## run model
 from transformers import BertForSequenceClassification, pipeline
