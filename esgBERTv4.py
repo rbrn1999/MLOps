@@ -134,7 +134,7 @@ try:
         print("'train_used.csv' is updated")
         logging.info("'train_used.csv' is updated")
     else:
-        logging_df.loc[0, ['Is Better']] = [False]
+        logging_df.loc[0, ['Model Update']] = [False]
         print("model is not better after training, model won't be saved.")
         logging.info(f"metrics is not better, won't update model.")
 except KeyError:
