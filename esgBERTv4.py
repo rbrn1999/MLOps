@@ -67,7 +67,7 @@ tokenized_datasets = DatasetDict(
     }
 )
 
-checkpoint = "esgBERT_CICD/esgBERT"
+checkpoint = "./esgBERT_CICD"
 model = BertForSequenceClassification.from_pretrained(checkpoint, num_labels=35, id2label=int2Label, label2id=label2Int)
 
 
@@ -125,7 +125,7 @@ try:
         print("model updated")
         logging.info(f"model updated.")
         shutil.copytree("checkpoints/runs", "esgBERT_CICD/logs", dirs_exist_ok=True)
-        print(subprocess.run(["git", "add", "esgBERT", "metrics.json", "logs/"], cwd="/workspace/Step3/esgBERT_CICD"))
+        print(subprocess.run(["git", "add", "training_args.bin", "pytorch_model.bin", "config.json", "metrics.json", "logs/"], cwd="/workspace/Step3/esgBERT_CICD"))
         print(subprocess.run(["git", "commit", "-m", f"bot: model update"], cwd="/workspace/Step3/esgBERT_CICD"))
         print(subprocess.run(["git", "push"], cwd="/workspace/Step3/esgBERT_CICD"))
         print("model pushed to Hugging Face hub")
