@@ -19,7 +19,7 @@
 * To install Python packages with pip: `$ pip install -r requirements.txt`
 ### Setup
 1. Clone the model and dataset repo and set up the git credential.
-2. Make sure that the working directory, file names are set correctly.
+2. Make sure that the working directory, file names are set correctly. (recommend to use SSH)
 3. Setup the webhook flask server: `python webhook.py`
 4. Set the webhook in Hugging Face: "Settings->Webhooks". It should be triggered by the `hf_dataset` repository's main branch commit.
 
@@ -36,8 +36,5 @@
 ### Tips 
 * Make sure to run the webhook server in the background. 
 * Using ngrok is an option for testing.
-
-## TODOs
-- [x] Add `requirements.txt` for python pakages
-- [ ] Replace flask server with Jenkins
+* If the run failed, change "commit.txt" and replay the webhook to try again without a new commit.
 

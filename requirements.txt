@@ -1,4 +1,5 @@
 pandas
 datasets
-transformers
+transformers[torch]
 scikit-learn
+Flask
