@@ -11,11 +11,13 @@ from sklearn.metrics import accuracy_score, f1_score
 logging.basicConfig(filename="log.txt", level=logging.DEBUG,
                     format="%(asctime)s %(message)s", filemode="a")
 
+workspace = "/workspace"
+
 # subprocess.run(["git", "clone", "https://huggingface.co/owen198/esgBERT_CICD"]) # first time
-subprocess.run(["git", "fetch", "origin", "main"], cwd="/workspace/Step3/esgBERT_dataset")
-subprocess.run(["git", "reset", "--hard", "FETCH_HEAD"], cwd="/workspace/Step3/esgBERT_dataset")
-subprocess.run(["git", "fetch", "origin", "main"], cwd="/workspace/Step3/esgBERT_CICD")
-subprocess.run(["git", "reset", "--hard", "FETCH_HEAD"], cwd="/workspace/Step3/esgBERT_CICD")
+subprocess.run(["git", "fetch", "origin", "main"], cwd=f"{workspace}/esgBERT_dataset")
+subprocess.run(["git", "reset", "--hard", "FETCH_HEAD"], cwd=f"{workspace}/esgBERT_dataset")
+subprocess.run(["git", "fetch", "origin", "main"], cwd=f"{workspace}/esgBERT_CICD")
+subprocess.run(["git", "reset", "--hard", "FETCH_HEAD"], cwd=f"{workspace}/esgBERT_CICD")
 
 train_df = pd.read_csv('esgBERT_dataset/train.csv')
 used_set = set(pd.read_csv('train_used.csv').text)
@@ -105,9 +107,6 @@ trainer = Trainer(
 print(trainer.train())
 print(trainer.evaluate())
 
-shutil.copytree("checkpoints/runs", "esgBERT_CICD/logs", dirs_exist_ok=True)
-
-
 prev_metrics = {}
 with open("esgBERT_CICD/metrics.json", "r") as file:
     prev_metrics = json.load(file)
@@ -124,10 +123,14 @@ try:
         trainer.save_model(checkpoint)
         print("model updated")
         logging.info(f"model updated.")
-        shutil.copytree("checkpoints/runs", "esgBERT_CICD/logs", dirs_exist_ok=True)
-        print(subprocess.run(["git", "add", "training_args.bin", "pytorch_model.bin", "config.json", "metrics.json", "logs/"], cwd="/workspace/Step3/esgBERT_CICD"))
-        print(subprocess.run(["git", "commit", "-m", f"bot: model update"], cwd="/workspace/Step3/esgBERT_CICD"))
-        print(subprocess.run(["git", "push"], cwd="/workspace/Step3/esgBERT_CICD"))
+        try:
+            shutil.copytree("checkpoints/runs", "esgBERT_CICD/logs", dirs_exist_ok=True)
+        except FileNotFoundError:
+            logging.info("checkpoint/runs doesn't exist")
+            print("training log doesn't exist")
+        print(subprocess.run(["git", "add", "training_args.bin", "pytorch_model.bin", "config.json", "metrics.json", "logs/"], cwd=f"{workspace}/esgBERT_CICD"))
+        print(subprocess.run(["git", "commit", "-m", f"bot: model update"], cwd="/workspace/esgBERT_CICD"))
+        print(subprocess.run(["git", "push"], cwd=f"{workspace}/esgBERT_CICD"))
         print("model pushed to Hugging Face hub")
         logging.info(f"model pushed to Hugging Face hub")
         shutil.copyfile("esgBERT_dataset/train.csv", "train_used.csv")
