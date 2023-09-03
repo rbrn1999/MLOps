@@ -13,13 +13,13 @@ logging.basicConfig(filename="log.txt", level=logging.DEBUG,
 
 workspace = "/workspace"
 
-# subprocess.run(["git", "clone", "https://huggingface.co/owen198/esgBERT_CICD"]) # first time
-subprocess.run(["git", "fetch", "origin", "main"], cwd=f"{workspace}/esgBERT_dataset")
-subprocess.run(["git", "reset", "--hard", "FETCH_HEAD"], cwd=f"{workspace}/esgBERT_dataset")
-subprocess.run(["git", "fetch", "origin", "main"], cwd=f"{workspace}/esgBERT_CICD")
-subprocess.run(["git", "reset", "--hard", "FETCH_HEAD"], cwd=f"{workspace}/esgBERT_CICD")
+# subprocess.run(["git", "clone", "https://huggingface.co/<username>/hf_model"]) # first time
+subprocess.run(["git", "fetch", "origin", "main"], cwd=f"{workspace}/hf_dataset")
+subprocess.run(["git", "reset", "--hard", "FETCH_HEAD"], cwd=f"{workspace}/hf_dataset")
+subprocess.run(["git", "fetch", "origin", "main"], cwd=f"{workspace}/hf_model")
+subprocess.run(["git", "reset", "--hard", "FETCH_HEAD"], cwd=f"{workspace}/hf_model")
 
-train_df = pd.read_csv('esgBERT_dataset/train.csv')
+train_df = pd.read_csv('hf_dataset/train.csv')
 used_set = set(pd.read_csv('train_used.csv').text)
 
 train_length = len(train_df)
@@ -30,7 +30,7 @@ print(f'train.csv new table rows: {new_data_length} / {train_length}')
 train_labels = train_df['label'].tolist()
 train_texts = train_df['text'].tolist()
 
-dev_df = pd.read_csv('esgBERT_dataset/dev.csv')
+dev_df = pd.read_csv('hf_dataset/dev.csv')
 
 dev_labels = dev_df['label'].tolist()
 dev_texts = dev_df['text'].tolist()
@@ -45,7 +45,8 @@ logging.info("New Training")
 logging.info(f"trained data count: {len(used_set)}")
 logging.info(f"new data count(not_used/total): {new_data_length} / {train_length}")
 
-labels = ['Access to Communications', 'Access to Finance', 'Access to Health Care', 'Accounting', 'Biodiversity and Land Use', 'Board', 'Business Ethics', 'Carbon Emissions', 'Chemical Safety', 'Climate Change Vulnerability', 'Community Relations', 'Controversial Sourcing', 'Electronic Waste', 'Financial Product Safety', 'Financing Environmental Impact', 'Health and Demographic Risk', 'Health and Safety', 'Human Capital Development', 'Labor Management', 'Opportunities in Clean Tech', 'Opportunities in Green Building', 'Opportunities in Nutrition and Health', 'Opportunities in Renewable Energy', 'Ownership and Control', 'Packaging Material and Waste', 'Pay', 'Privacy and Data Security', 'Product Carbon Footprint', 'Product Safety and Quality', 'Raw Material Sourcing', 'Responsible Investment', 'Supply Chain Labor Standards', 'Tax Transparency', 'Toxic Emissions and Waste', 'Water Stress']
+# Labels for your classification model
+labels = []
 label2Int = {labels[i]: i for i in range(len(labels))}
 int2Label = {i: labels[i] for i in range(len(labels))}
 train_labels = [label2Int[label] for label in train_labels]
@@ -69,7 +70,7 @@ tokenized_datasets = DatasetDict(
     }
 )
 
-checkpoint = "./esgBERT_CICD"
+checkpoint = "./hf_model"
 model = BertForSequenceClassification.from_pretrained(checkpoint, num_labels=35, id2label=int2Label, label2id=label2Int)
 
 
@@ -108,7 +109,7 @@ print(trainer.train())
 print(trainer.evaluate())
 
 prev_metrics = {}
-with open("esgBERT_CICD/metrics.json", "r") as file:
+with open("hf_model/metrics.json", "r") as file:
     prev_metrics = json.load(file)
 
 metrics = trainer.evaluate()
@@ -118,22 +119,22 @@ logging_df = pd.DataFrame([[timestamp, True, True, new_data_length, train_length
     
 try:
     if metrics['eval_loss'] <= prev_metrics['eval_loss'] and metrics['eval_f1_weighted'] >= prev_metrics['eval_f1_weighted']:
-        with open("esgBERT_CICD/metrics.json", "w") as file:
+        with open("hf_model/metrics.json", "w") as file:
             json.dump(metrics, file)
         trainer.save_model(checkpoint)
         print("model updated")
         logging.info(f"model updated.")
         try:
-            shutil.copytree("checkpoints/runs", "esgBERT_CICD/logs", dirs_exist_ok=True)
+            shutil.copytree("checkpoints/runs", "hf_model/logs", dirs_exist_ok=True)
         except FileNotFoundError:
             logging.info("checkpoint/runs doesn't exist")
             print("training log doesn't exist")
-        print(subprocess.run(["git", "add", "training_args.bin", "pytorch_model.bin", "config.json", "metrics.json", "logs/"], cwd=f"{workspace}/esgBERT_CICD"))
-        print(subprocess.run(["git", "commit", "-m", f"bot: model update"], cwd="/workspace/esgBERT_CICD"))
-        print(subprocess.run(["git", "push"], cwd=f"{workspace}/esgBERT_CICD"))
+        print(subprocess.run(["git", "add", "training_args.bin", "pytorch_model.bin", "config.json", "metrics.json", "logs/"], cwd=f"{workspace}/hf_model"))
+        print(subprocess.run(["git", "commit", "-m", f"bot: model update"], cwd="/workspace/hf_model"))
+        print(subprocess.run(["git", "push"], cwd=f"{workspace}/hf_model"))
         print("model pushed to Hugging Face hub")
         logging.info(f"model pushed to Hugging Face hub")
-        shutil.copyfile("esgBERT_dataset/train.csv", "train_used.csv")
+        shutil.copyfile("hf_dataset/train.csv", "train_used.csv")
         print("'train_used.csv' is updated")
         logging.info("'train_used.csv' is updated")
     else:

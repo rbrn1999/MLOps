@@ -1,9 +1,9 @@
-# esgBERT_MLOps
+# MLOps for HF Classification Models
 ![System Sequence Diagram](imgs/SSD.png "System Sequence Diagram")
 ## Description
 
-`hf_dataset`: dataset repository hosted on Hugging Face Hub. (current: [owen198/esgBERT_dataset](https://huggingface.co/datasets/owen198/esgBERT_dataset))  \
-`hf_model`: model repository hosted on Hugging Face Hub.(current: [owen198/esgBERT_CICD](https://huggingface.co/owen198/esgBERT_CICD)) 
+`hf_dataset`: dataset repository hosted on Hugging Face Hub.
+`hf_model`: model repository hosted on Hugging Face Hub.
 
 
 `esgBERTv4.py`: training script \
@@ -37,4 +37,9 @@
 * Make sure to run the webhook server in the background. 
 * Using ngrok is an option for testing.
 * If the run failed, change "commit.txt" and replay the webhook to try again without a new commit.
+
+## Future Works
+* Host training dataset on a database
+* Use Hugging Face Hub's library to handle pulling/pushing of the repos
+* Implement with DevOps, CI/CD tools
 

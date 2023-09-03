@@ -25,7 +25,7 @@ def didCommit():
 
     with open("commit.txt", "w+") as f:
         f.write(cur_headSha)
-    subprocess.run(["python", "esgBERTv4.py"], cwd="/workspace/Step3")
+    subprocess.run(["python", "main.py"], cwd="/workspace/MLOps")
 
     return data
 
